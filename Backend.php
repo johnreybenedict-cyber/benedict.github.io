@@ -3,7 +3,7 @@
    Courtside Scoreboard — backend.php
    One file that does everything the PHP side needs:
      1) MySQL connection settings (edit these for your XAMPP setup)
-     2) GET  -> returns the current tbl_team + tbl_buffer rows (page load)
+     2) GET  -> returns the current Tbl_team + Tbl_buffer rows (page load)
      3) POST -> receives updates from script.js and saves them
    ========================================================= */
 
@@ -36,67 +36,12 @@ try {
 $method = $_SERVER['REQUEST_METHOD'];
 
 // ---------------------------------------------------------
-// 1b) GET with ?stream=1 — Server-Sent Events push feed for viewer.html
-//     Holds the connection open and only sends data when tbl_team /
-//     tbl_buffer actually changed, instead of the browser polling.
-// ---------------------------------------------------------
-if ($method === 'GET' && isset($_GET['stream'])) {
-    set_time_limit(0);
-    ignore_user_abort(false);
-
-    // disable any output buffering/compression that would delay delivery
-    while (ob_get_level()) { ob_end_clean(); }
-    ini_set('zlib.output_compression', '0');
-    ini_set('output_buffering', 'off');
-    ini_set('implicit_flush', '1');
-
-    header('Content-Type: text/event-stream');
-    header('Cache-Control: no-cache');
-    header('Connection: keep-alive');
-    header('X-Accel-Buffering: no'); // harmless if not behind nginx
-
-    // tell the browser to reconnect fast if this connection ever drops
-    echo "retry: 1000\n\n";
-    flush();
-
-    $lastPayload = null;
-    $started = time();
-
-    // stays open for up to 5 minutes per connection, then exits cleanly —
-    // EventSource auto-reconnects, so this is invisible to the viewer
-    while (time() - $started < 300) {
-        if (connection_aborted()) break;
-
-        try {
-            $team = $pdo->query('SELECT * FROM tbl_team ORDER BY id')->fetchAll();
-            $buffer = $pdo->query('SELECT * FROM tbl_buffer ORDER BY id')->fetchAll();
-            $payload = json_encode(['ok' => true, 'team' => $team, 'buffer' => $buffer]);
-
-            if ($payload !== $lastPayload) {
-                echo "data: {$payload}\n\n";
-                flush();
-                $lastPayload = $payload;
-            } else {
-                echo ": heartbeat\n\n"; // comment line keeps proxies/browsers from timing out
-                flush();
-            }
-        } catch (Throwable $e) {
-            echo "data: " . json_encode(['ok' => false, 'error' => $e->getMessage()]) . "\n\n";
-            flush();
-        }
-
-        usleep(300000); // check for DB changes ~3x/sec
-    }
-    exit;
-}
-
-// ---------------------------------------------------------
 // 2) GET — load current scoreboard state (called on page load)
 // ---------------------------------------------------------
 if ($method === 'GET') {
     try {
-        $team = $pdo->query('SELECT * FROM tbl_team ORDER BY id')->fetchAll();
-        $buffer = $pdo->query('SELECT * FROM tbl_buffer ORDER BY id')->fetchAll();
+        $team = $pdo->query('SELECT * FROM Tbl_team ORDER BY id')->fetchAll();
+        $buffer = $pdo->query('SELECT * FROM Tbl_buffer ORDER BY id')->fetchAll();
         echo json_encode(['ok' => true, 'team' => $team, 'buffer' => $buffer]);
     } catch (Throwable $e) {
         http_response_code(500);
@@ -125,22 +70,16 @@ if ($method === 'POST') {
     try {
         $pdo->beginTransaction();
 
-        // INSERT ... ON DUPLICATE KEY UPDATE so a save works even if the seed
-        // row for this id doesn't exist yet (requires id to be a PRIMARY KEY).
         $updateTeam = $pdo->prepare(
-            'INSERT INTO tbl_team (id, Team, Points, Clock, quarter, OT)
-                  VALUES (:id, :team, :points, :clock, :quarter, :ot)
-             ON DUPLICATE KEY UPDATE
-                  Team = VALUES(Team), Points = VALUES(Points), Clock = VALUES(Clock),
-                  quarter = VALUES(quarter), OT = VALUES(OT)'
+            'UPDATE Tbl_team
+                SET Team = :team, Points = :points, Clock = :clock, quarter = :quarter, OT = :ot
+              WHERE id = :id'
         );
 
         $updateBuffer = $pdo->prepare(
-            'INSERT INTO tbl_buffer (id, Team, Points, Foul, `T/O`, Clock)
-                  VALUES (:id, :team, :points, :foul, :timeouts, :clock)
-             ON DUPLICATE KEY UPDATE
-                  Team = VALUES(Team), Points = VALUES(Points), Foul = VALUES(Foul),
-                  `T/O` = VALUES(`T/O`), Clock = VALUES(Clock)'
+            'UPDATE Tbl_buffer
+                SET Team = :team, Points = :points, Foul = :foul, `T/O` = :timeouts, Clock = :clock
+              WHERE id = :id'
         );
 
         foreach ($data['teams'] as $id => $team) {

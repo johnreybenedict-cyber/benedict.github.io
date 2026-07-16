@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Courtside — Scoreboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="arena">
+
+  <!-- Top bar: period / OT / connection status -->
+  <header class="topbar">
+    <div class="period-block">
+      <button id="prevPeriod" class="period-btn" aria-label="Previous period">–</button>
+      <div class="period-readout">
+        <span id="periodLabel">Q1</span>
+      </div>
+      <button id="nextPeriod" class="period-btn" aria-label="Next period">+</button>
+    </div>
+
+    <div class="brand">COURTSIDE</div>
+
+    <div class="sync-block">
+      <span id="syncDot" class="sync-dot"></span>
+      <span id="syncLabel">saved</span>
+    </div>
+  </header>
+
+  <!-- Main scoreboard -->
+  <main class="board">
+
+    <!-- TEAM A -->
+    <section class="team team--a" style="--team-color: var(--teamA-color)">
+      <div class="team-id">
+        <label class="photo-upload" for="photoA">
+          <img id="photoAPreview" class="team-photo" alt="Team A logo" src="">
+          <span class="photo-placeholder">Add photo</span>
+          <input type="file" id="photoA" accept="image/*" hidden>
+        </label>
+        <input type="text" id="nameA" class="team-name-input" placeholder="TEAM A" maxlength="18">
+      </div>
+
+      <div class="score-display">
+        <span id="scoreA" class="score-number">0</span>
+      </div>
+
+      <div class="score-buttons">
+        <button class="pts-btn" data-team="A" data-pts="1">+1</button>
+        <button class="pts-btn" data-team="A" data-pts="2">+2</button>
+        <button class="pts-btn" data-team="A" data-pts="3">+3</button>
+      </div>
+
+      <div class="sub-stats">
+        <div class="stat">
+          <span class="stat-label">FOULS</span>
+          <div class="stat-control">
+            <button class="stat-btn minus" data-team="A" data-stat="foul" data-dir="-1">–</button>
+            <span id="foulA" class="stat-value">5</span>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat-label">T/O</span>
+          <div class="stat-control">
+            <button class="stat-btn minus" data-team="A" data-stat="to" data-dir="-1">–</button>
+            <span id="toA" class="stat-value">5</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER CLOCK MODULE -->
+    <section class="clock-module">
+
+      <div class="lamp-row">
+        <span id="lampL" class="lamp"></span>
+        <span class="lamp-caption">WARNING</span>
+        <span id="lampR" class="lamp"></span>
+      </div>
+
+      <div id="clockFace" class="clock-face">
+        <span id="clockDisplay">00:00.0</span>
+      </div>
+
+      <div class="mode-toggle">
+        <button id="modeTimer" class="mode-btn active" data-mode="timer">TIMER</button>
+        <button id="modeStopwatch" class="mode-btn" data-mode="stopwatch">STOPWATCH</button>
+      </div>
+
+      <div class="clock-controls">
+        <button id="startPauseBtn" class="ctrl-btn primary">START</button>
+        <button id="resetBtn" class="ctrl-btn">RESET</button>
+        <button id="setBtn" class="ctrl-btn">SET</button>
+      </div>
+
+    </section>
+
+    <!-- TEAM B -->
+    <section class="team team--b" style="--team-color: var(--teamB-color)">
+      <div class="team-id">
+        <label class="photo-upload" for="photoB">
+          <img id="photoBPreview" class="team-photo" alt="Team B logo" src="">
+          <span class="photo-placeholder">Add photo</span>
+          <input type="file" id="photoB" accept="image/*" hidden>
+        </label>
+        <input type="text" id="nameB" class="team-name-input" placeholder="TEAM B" maxlength="18">
+      </div>
+
+      <div class="score-display">
+        <span id="scoreB" class="score-number">0</span>
+      </div>
+
+      <div class="score-buttons">
+        <button class="pts-btn" data-team="B" data-pts="1">+1</button>
+        <button class="pts-btn" data-team="B" data-pts="2">+2</button>
+        <button class="pts-btn" data-team="B" data-pts="3">+3</button>
+      </div>
+
+      <div class="sub-stats">
+        <div class="stat">
+          <span class="stat-label">FOULS</span>
+          <div class="stat-control">
+            <button class="stat-btn minus" data-team="B" data-stat="foul" data-dir="-1">–</button>
+            <span id="foulB" class="stat-value">5</span>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat-label">T/O</span>
+          <div class="stat-control">
+            <button class="stat-btn minus" data-team="B" data-stat="to" data-dir="-1">–</button>
+            <span id="toB" class="stat-value">5</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="ot-section">
+    <button id="overtimeBtn" class="ot-btn">Overtime</button>
+  </div>
+
+  <footer class="foot-note">
+    <button id="resetAllBtn" class="text-btn">Reset match</button>
+    <span class="dot-sep">·</span>
+    <span id="dbNote">Writing to Tbl_team &amp; Tbl_buffer via backend.php</span>
+  </footer>
+
+</div>
+
+<!-- SET TIME MODAL -->
+<div id="setModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Set time</h2>
+    <div class="set-fields">
+      <div class="set-field">
+        <label for="setMinutes">Minutes</label>
+        <input type="number" id="setMinutes" min="0" max="99" value="10">
+      </div>
+      <div class="set-field">
+        <label for="setSeconds">Seconds</label>
+        <input type="number" id="setSeconds" min="0" max="59" value="0">
+      </div>
+    </div>
+    <p class="modal-hint">Only used in TIMER mode. Stopwatch always starts from 00:00.0.</p>
+    <div class="modal-actions">
+      <button id="cancelSet" class="ctrl-btn">Cancel</button>
+      <button id="confirmSet" class="ctrl-btn primary">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Buzzer sound, generated with WebAudio (see script.js) so no external audio file is required -->
+
+<script src="script.js"></script>
+</body>
+</html>
